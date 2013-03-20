@@ -577,7 +577,12 @@
 #define HAVE_SIGNAL_H 1
 
 /* Define to 1 if you have the sigsetjmp function or macro. */
+// android ndk x86 compiler has some bugs, should disable sigsetjmp
+// refer to https://github.com/cocos2d/cocos2d-x/issues/1650 for more information
+// should revert to original version when android ndk fixes the issue
+#if !defined(__i386__) && !defined(__i686__)
 #define HAVE_SIGSETJMP 1
+#endif
 
 /* Define to 1 if sig_atomic_t is an available typedef. */
 #define HAVE_SIG_ATOMIC_T 1
