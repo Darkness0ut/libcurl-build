@@ -200,6 +200,12 @@ EVP_PKEY *EVP_PKEY_new(void)
 	return(ret);
 	}
 
+EVP_PKEY *EVP_PKEY_dup(EVP_PKEY *pkey)
+	{
+	CRYPTO_add(&pkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
+	return pkey;
+	}
+
 /* Setup a public key ASN1 method and ENGINE from a NID or a string.
  * If pkey is NULL just return 1 or 0 if the algorithm exists.
  */
@@ -411,7 +417,10 @@ void EVP_PKEY_free(EVP_PKEY *x)
 static void EVP_PKEY_free_it(EVP_PKEY *x)
 	{
 	if (x->ameth && x->ameth->pkey_free)
+		{
 		x->ameth->pkey_free(x);
+		x->pkey.ptr = NULL;
+		}
 #ifndef OPENSSL_NO_ENGINE
 	if (x->engine)
 		{
