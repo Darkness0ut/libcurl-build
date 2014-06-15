@@ -37,3 +37,28 @@ alpn.patch
 This change adds support for ALPN in OpenSSL. ALPN is the IETF
 blessed version of NPN and we'll be supporting both ALPN and NPN for
 some time yet.
+
+cbc_record_splitting.patch
+
+BEAST attack client-side mitigation. Removes 0/n record splitting, adds 1/n-1
+record splitting. Record splitting is disabled by default.
+
+dsa_nonce.patch
+
+Adds an option to mix in hash of message and private key into (EC)DSA nonces to
+make (EC)DSA more resilient to weaknesses in RNGs used for nonces. The feature
+is disabled by default.
+
+ecdhe_psk.patch
+
+Adds support for ECDHE Pre-Shared Key (PSK) TLS cipher suites.
+
+tls_psk_hint.patch
+
+Fixes issues with TLS-PSK identity hint implementation where
+per-connection/session and per-context hints were being mixed up.
+
+psk_client_callback_128_byte_id_bug.patch
+
+Fixes the issue where it was impossible to return a 128 byte long PSK identity
+(the maximum supported length) from psk_client_callback.

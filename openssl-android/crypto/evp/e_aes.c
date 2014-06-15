@@ -482,6 +482,14 @@ static const EVP_CIPHER aes_##keylen##_##mode = { \
 	NULL,NULL,aes_##mode##_ctrl,NULL }; \
 const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 { return &aes_##keylen##_##mode; }
+
+#endif
+
+#if defined(AES_ASM) && defined(BSAES_ASM) && (defined(__arm__) || defined(__arm))
+#include "arm_arch.h"
+#if __ARM_ARCH__>=7
+#define BSAES_CAPABLE  (OPENSSL_armcap_P & ARMV7_NEON)
+#endif
 #endif
 
 #define BLOCK_CIPHER_generic_pack(nid,keylen,flags)		\
@@ -842,7 +850,10 @@ static int aes_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			gctx->ctr = NULL;
 			break;
 			}
+		else
 #endif
+		(void)0;	/* terminate potentially open 'else' */
+
 		AES_set_encrypt_key(key, ctx->key_len * 8, &gctx->ks);
 		CRYPTO_gcm128_init(&gctx->gcm, &gctx->ks, (block128_f)AES_encrypt);
 #ifdef AES_CTR_ASM
@@ -1064,10 +1075,12 @@ static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		xctx->stream = NULL;
 #endif
 		/* key_len is two AES keys */
+#if !(defined(__arm__) || defined(__arm))      /* not yet? */
 #ifdef BSAES_CAPABLE
 		if (BSAES_CAPABLE)
 			xctx->stream = enc ? bsaes_xts_encrypt : bsaes_xts_decrypt;
 		else
+#endif
 #endif
 #ifdef VPAES_CAPABLE
 		if (VPAES_CAPABLE)
@@ -1083,14 +1096,17 @@ static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			xctx->xts.block1 = (block128_f)vpaes_decrypt;
 			}
 
-		vpaes_set_encrypt_key(key + ctx->key_len/2,
+		    vpaes_set_encrypt_key(key + ctx->key_len/2,
 						ctx->key_len * 4, &xctx->ks2);
-		xctx->xts.block2 = (block128_f)vpaes_encrypt;
+		    xctx->xts.block2 = (block128_f)vpaes_encrypt;
 
-		xctx->xts.key1 = &xctx->ks1;
-		break;
-		}
+		    xctx->xts.key1 = &xctx->ks1;
+		    break;
+		    }
+		else
 #endif
+		(void)0;	/* terminate potentially open 'else' */
+
 		if (enc)
 			{
 			AES_set_encrypt_key(key, ctx->key_len * 4, &xctx->ks1);
